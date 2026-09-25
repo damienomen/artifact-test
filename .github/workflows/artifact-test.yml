@@ -1,0 +1,32 @@
+name: artifact-download-test
+on: workflow_dispatch
+
+jobs:
+    make-artifact:
+          runs-on: ubuntu-latest
+              outputs:
+                      sha: ${{ steps.hash.outputs.sha }}
+                          steps:
+                                  - run: dd if=/dev/urandom of=big.bin bs=1M count=1536
+                                        - id: hash
+                                                run: echo "sha=$(sha256sum big.bin | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+                                                      - uses: actions/upload-artifact@v4
+                                                              with:
+                                                                          name: big-test
+                                                                                    path: big.bin
+                                                                                              compression-level: 0
+                                                                                                        retention-days: 1
+
+                                                                                                          download-test:
+                                                                                                                needs: make-artifact
+                                                                                                                    runs-on: [self-hosted, artifact-test]
+                                                                                                                        steps:
+                                                                                                                                - run: echo "start=$(date +%s)" >> "$GITHUB_ENV"
+                                                                                                                                      - uses: actions/download-artifact@v4
+                                                                                                                                              with:
+                                                                                                                                                          name: big-test
+                                                                                                                                                                - run: |
+                                                                                                                                                                            echo "elapsed: $(( $(date +%s) - start ))s"
+                                                                                                                                                                                      ls -lh big.bin
+                                                                                                                                                                                                echo "${{ needs.make-artifact.outputs.sha }}  big.bin" | sha256sum -c -
+                                                                                                                                                                                                          rm -f big.bin
